@@ -141,32 +141,29 @@ function showEmojiBurst(targetEl, isCorrect) {
   const centerX = rect.left + rect.width / 2 - parentRect.left;
   const centerY = rect.top + rect.height / 2 - parentRect.top;
 
-  const count = 5;          // сколько смайликов
-  const radius = 80;        // радиус разлёта в пикселях
+  const count = 5;      // сколько смайликов
+  const radius = 80;    // насколько далеко разлетаются
 
   for (let i = 0; i < count; i++) {
     const span = document.createElement('span');
     span.className = 'emoji-burst';
     span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
 
-    // равномерно по кругу + чуть случайности
     const baseAngle = (Math.PI * 2 * i) / count;
-    const angle = baseAngle + (Math.random() - 0.5) * 0.5; // небольшое отклонение
+    const angle = baseAngle + (Math.random() - 0.5) * 0.5;
 
     const dx = Math.cos(angle) * radius;
     const dy = Math.sin(angle) * radius;
 
-    span.style.left = centerX + 'px';
-    span.style.top = centerY + 'px';
-
-    // стартуем из центра, а в анимации улетаем на dx, dy
-    span.style.setProperty('--dx', dx.toFixed(1) + 'px');
-    span.style.setProperty('--dy', dy.toFixed(1) + 'px');
+    // конечная позиция смайлика
+    span.style.left = (centerX + dx) + 'px';
+    span.style.top  = (centerY + dy) + 'px';
 
     emojiLayer.appendChild(span);
     setTimeout(() => span.remove(), 800);
   }
 }
+
 
     function startGame(mode) {
       currentMode = mode;

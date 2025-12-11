@@ -1,4 +1,6 @@
-* { box-sizing: border-box; }
+* {
+  box-sizing: border-box;
+}
 
 html, body {
   margin: 0;
@@ -17,23 +19,23 @@ body {
   background-color: #8fd3ff;
   background-position: center center;
   background-repeat: no-repeat;
-  background-size: contain; /* картинка целиком без искажений */
+  background-size: contain;
 }
 
 /* фоны для разных экранов */
-body.menu-bg  { background-image: url('./bg-menu.jpg'); }
+body.menu-bg { background-image: url('./bg-menu.jpg'); }
 body.color-bg { background-image: url('./bg-color.jpg'); }
 body.shape-bg { background-image: url('./bg-shape.jpg'); }
-body.both-bg  { background-image: url('./bg-both.jpg'); }
+body.both-bg { background-image: url('./bg-both.jpg'); }
 
-/* окно игры/меню — увеличено почти в 2 раза */
+/* окно игры/меню */
 .screen {
   display: none;
   border-radius: 28px;
   box-shadow: 0 14px 32px rgba(0,0,0,0.22);
-  padding: 40px 36px 32px;   /* больше отступы */
+  padding: 40px 36px 32px;
   width: 100%;
-  max-width: 960px;          /* было 560px */
+  max-width: 960px;
   max-height: 90vh;
   text-align: center;
   border: 3px solid rgba(255,255,255,0.9);
@@ -41,9 +43,12 @@ body.both-bg  { background-image: url('./bg-both.jpg'); }
   background: transparent;
 }
 
-.screen.active { display: block; }
+.screen.active {
+  display: block;
+}
 
 .screen-inner {
+  position: relative; /* важно для смайликов */
   background: rgba(255,255,255,0.9);
   border-radius: 24px;
   padding: 24px 24px 26px;
@@ -69,6 +74,7 @@ p {
   font-size: 16px;
 }
 
+/* меню */
 .menu-buttons {
   display: flex;
   flex-direction: column;
@@ -120,6 +126,7 @@ p {
   box-shadow: 0 1px 0 rgba(0,0,0,0.25);
 }
 
+/* задание */
 .task {
   font-size: 19px;
   margin: 10px 0 20px;
@@ -127,10 +134,11 @@ p {
 }
 
 .highlight {
-  font-weight: 800;
-  color: #111827;
+  font-weight: 400;      /* без жирного выделения */
+  color: #111827;        /* тот же цвет, что и текст */
 }
 
+/* фигуры */
 .shapes {
   display: flex;
   justify-content: center;
@@ -171,9 +179,7 @@ p {
 }
 
 .shape-inner.circle { border-radius: 50%; }
-
 .shape-inner.square { border-radius: 10px; }
-
 .shape-inner.triangle {
   width: 0;
   height: 0;
@@ -183,6 +189,7 @@ p {
   border-radius: 5px;
 }
 
+/* инфо и кнопки */
 .info {
   font-size: 17px;
   margin-bottom: 12px;
@@ -229,30 +236,13 @@ button.btn:active {
   transform: translateY(1px) scale(0.98);
   box-shadow: 0 1px 0 rgba(0,0,0,0.3);
 }
-.emoji-burst {
-  position: absolute;
-  pointer-events: none;
-  font-size: 70px; /* было 26px */
-  animation: emoji-pop 700ms ease-out forwards;
-}
 
+/* === Смайлики === */
 .game-emoji-layer {
   position: absolute;
   inset: 0;
-  overflow: visible;
   pointer-events: none;
-}
-
-/* контейнер игры должен быть position: relative */
-.screen-inner {
-  position: relative;
-}
-
-.game-emoji-layer {
-  position: absolute;
-  inset: 0;
   overflow: visible;
-  pointer-events: none;
 }
 
 .emoji-burst {
@@ -264,14 +254,14 @@ button.btn:active {
 
 @keyframes emoji-pop {
   0% {
-    transform: translate(-50%, -50%) scale(0.3);
+    transform: translate(-50%, -40%) scale(0.3);
     opacity: 0;
   }
-  25% {
+  30% {
     opacity: 1;
   }
   100% {
-    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1);
+    transform: translate(-50%, -140%) scale(1);
     opacity: 0;
   }
 }

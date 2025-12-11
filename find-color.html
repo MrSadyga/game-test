@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Игры: Цвет и Форма</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="voice.js"></script>
+</head>
+<body>
+  <!-- Меню -->
+  <div class="screen active" id="menuScreen">
+    <div class="screen-inner">
+      <h1>Детские игры: Цвет и Форма</h1>
+      <p>Выбери игру:</p>
+      <div class="menu-buttons">
+        <button class="menu-btn" data-mode="color">
+          Игра «Найди цвет»
+          <span>нажми на нужный цвет</span>
+        </button>
+        <button class="menu-btn" data-mode="shape">
+          Игра «Найди форму»
+          <span>круг, квадрат, треугольник</span>
+        </button>
+        <button class="menu-btn" data-mode="both">
+          Игра «Цвет + форма»
+          <span>найди, например, красный круг</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Игра -->
+  <div class="screen" id="gameScreen">
+    <div class="screen-inner">
+      <h2 id="gameTitle">Игра</h2>
+
+      <div class="task" id="taskText">
+        Нажми на цвет: <span class="highlight" id="taskHighlight">...</span>
+      </div>
+
+      <div class="shapes" id="shapes"></div>
+
+      <div class="info">
+        Счёт: <span class="score" id="score">0</span>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" id="nextBtn">Следующий раунд</button>
+        <button class="btn secondary" id="backBtn">Назад в меню</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const bodyEl = document.body;
+
+    const colors = [
+      { key: 'red',    nameRu: 'красный',  hex: '#ef4444' },
+      { key: 'blue',   nameRu: 'синий',    hex: '#3b82f6' },
+      { key: 'green',  nameRu: 'зелёный',  hex: '#22c55e' },
+      { key: 'yellow', nameRu: 'жёлтый',   hex: '#eab308' },
+      { key: 'purple', nameRu: 'фиолетовый', hex: '#a855f7' },
+      { key: 'orange', nameRu: 'оранжевый', hex: '#f97316' }
+    ];
+
+    const shapesList = [
+      { key: 'circle',   nameRu: 'круг' },
+      { key: 'square',   nameRu: 'квадрат' },
+      { key: 'triangle', nameRu: 'треугольник' }
+    ];
+
+    const menuScreen   = document.getElementById('menuScreen');
+    const gameScreen   = document.getElementById('gameScreen');
+    const gameTitleEl  = document.getElementById('gameTitle');
+    const taskTextEl   = document.getElementById('taskText');
+    const shapesCont   = document.getElementById('shapes');
+    const scoreEl      = document.getElementById('score');
+    const nextBtn      = document.getElementById('nextBtn');
+    const backBtn      = document.getElementById('backBtn');
+
+    let currentMode = 'color';
+    let currentTarget = null;
+    let score = 0;
+    let canClick = true;
+    let currentTaskText = '';
+
+    const correctSound = new Audio('./correct.mp3');
+    const wrongSound   = new Audio('./wrong.mp3');
+    correctSound.volume = 0.7;
+    wrongSound.volume   = 0.7;
+
+    // фон меню при старте
+    bodyEl.classList.add('menu-bg');
+
+    function showScreen(id) {
+      menuScreen.classList.remove('active');
+      gameScreen.classList.remove('active');
+      document.getElementById(id).classList.add('active');
+    }
+
+    function getRandomItems(arr, count) {
+      const shuffled = [...arr].sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, count);
+    }
+
+    function getRandomFrom(arr) {
+      const i = Math.floor(Math.random() * arr.length);
+      return arr[i];
+    }
+
+    function startGame(mode) {
+      currentMode = mode;
+      score = 0;
+      scoreEl.textContent = score;
+
+      bodyEl.classList.remove('menu-bg', 'color-bg', 'shape-bg', 'both-bg');
+
+      if (mode === 'color') {
+        bodyEl.classList.add('color-bg');
+        gameTitleEl.textContent = 'Игра «Найди цвет»';
+      } else if (mode === 'shape') {
+        bodyEl.classList.add('shape-bg');
+        gameTitleEl.textContent = 'Игра «Найди форму»';
+      } else {
+        bodyEl.classList.add('both-bg');
+        gameTitleEl.textContent = 'Игра «Цвет + форма»';
+      }
+
+      showScreen('gameScreen');
+      newRound();
+    }
+
+    function newRound() {
+      shapesCont.innerHTML = '';
+      currentTarget = null;
+      canClick = true;
+      currentTaskText = '';
+
+      if (currentMode === 'color') {
+        taskTextEl.innerHTML =
+          'Нажми на цвет: <span class="highlight" id="taskHighlight"></span>';
+        const taskHighlightEl = document.getElementById('taskHighlight');
+
+        const roundColors = getRandomItems(colors, 4);
+        const targetColor = getRandomFrom(roundColors);
+
+        currentTarget = { colorKey: targetColor.key };
+        taskHighlightEl.textContent = targetColor.nameRu;
+        currentTaskText = 'Нажми на ' + targetColor.nameRu + ' цвет';
+
+        roundColors.forEach((c) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'shape';
+          wrapper.dataset.colorKey = c.key;
+
+          const inner = document.createElement('div');
+          inner.className = 'shape-inner circle';
+          inner.style.backgroundColor = c.hex;
+
+          wrapper.appendChild(inner);
+          shapesCont.appendChild(wrapper);
+        });
+      } else if (currentMode === 'shape') {
+        taskTextEl.innerHTML =
+          'Нажми на форму: <span class="highlight" id="taskHighlight"></span>';
+        const taskHighlightEl = document.getElementById('taskHighlight');
+
+        const roundShapes = getRandomItems(shapesList, 3);
+        const targetShape = getRandomFrom(roundShapes);
+
+        currentTarget = { shapeKey: targetShape.key };
+        taskHighlightEl.textContent = targetShape.nameRu;
+        currentTaskText = 'Нажми на форму ' + targetShape.nameRu;
+
+        roundShapes.forEach((s) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'shape';
+          wrapper.dataset.shapeKey = s.key;
+
+          const inner = document.createElement('div');
+          inner.className = 'shape-inner';
+
+          const colorHex = getRandomFrom(colors).hex;
+
+          if (s.key === 'circle') {
+            inner.classList.add('circle');
+            inner.style.backgroundColor = colorHex;
+          } else if (s.key === 'square') {
+            inner.classList.add('square');
+            inner.style.backgroundColor = colorHex;
+          } else if (s.key === 'triangle') {
+            inner.classList.add('triangle');
+            inner.style.borderBottomColor = colorHex;
+          }
+
+          wrapper.appendChild(inner);
+          shapesCont.appendChild(wrapper);
+        });
+      } else {
+        taskTextEl.innerHTML =
+          'Найди: <span class="highlight" id="taskHighlight"></span>';
+        const taskHighlightEl = document.getElementById('taskHighlight');
+
+        const targetColor = getRandomFrom(colors);
+        const targetShape = getRandomFrom(shapesList);
+
+        currentTarget = {
+          colorKey: targetColor.key,
+          shapeKey: targetShape.key
+        };
+        taskHighlightEl.textContent =
+          targetColor.nameRu + ' ' + targetShape.nameRu;
+        currentTaskText =
+          'Найди ' + targetColor.nameRu + ' ' + targetShape.nameRu;
+
+        const items = [];
+        items.push({
+          isTarget: true,
+          colorKey: targetColor.key,
+          shapeKey: targetShape.key
+        });
+
+        const usedCombos = new Set();
+        usedCombos.add(targetColor.key + '-' + targetShape.key);
+
+        while (items.length < 4) {
+          const c = getRandomFrom(colors);
+          const s = getRandomFrom(shapesList);
+          const comboKey = c.key + '-' + s.key;
+          if (usedCombos.has(comboKey)) continue;
+          usedCombos.add(comboKey);
+          items.push({
+            isTarget: false,
+            colorKey: c.key,
+            shapeKey: s.key
+          });
+        }
+
+        items.sort(() => Math.random() - 0.5);
+
+        items.forEach((item) => {
+          const wrapper = document.createElement('div');
+          wrapper.className = 'shape';
+          wrapper.dataset.colorKey = item.colorKey;
+          wrapper.dataset.shapeKey = item.shapeKey;
+
+          const inner = document.createElement('div');
+          inner.className = 'shape-inner';
+
+          const colorHex = colors.find(
+            (c) => c.key === item.colorKey
+          ).hex;
+
+          if (item.shapeKey === 'circle') {
+            inner.classList.add('circle');
+            inner.style.backgroundColor = colorHex;
+          } else if (item.shapeKey === 'square') {
+            inner.classList.add('square');
+            inner.style.backgroundColor = colorHex;
+          } else if (item.shapeKey === 'triangle') {
+            inner.classList.add('triangle');
+            inner.style.borderBottomColor = colorHex;
+          }
+
+          wrapper.appendChild(inner);
+          shapesCont.appendChild(wrapper);
+        });
+      }
+
+      // Автоматически озвучиваем новое задание
+      if (currentTaskText && typeof speak === 'function') {
+        speak(currentTaskText, 'ru-RU');
+      }
+    }
+
+    shapesCont.addEventListener('click', (e) => {
+      const target = e.target.closest('.shape');
+      if (!target || !canClick || !currentTarget) return;
+
+      let isCorrect = false;
+
+      if (currentMode === 'color') {
+        const chosenColor = target.dataset.colorKey;
+        isCorrect = chosenColor === currentTarget.colorKey;
+      } else if (currentMode === 'shape') {
+        const chosenShape = target.dataset.shapeKey;
+        isCorrect = chosenShape === currentTarget.shapeKey;
+      } else {
+        const chosenColor = target.dataset.colorKey;
+        const chosenShape = target.dataset.shapeKey;
+        isCorrect =
+          chosenColor === currentTarget.colorKey &&
+          chosenShape === currentTarget.shapeKey;
+      }
+
+      if (isCorrect) {
+        target.classList.add('correct');
+        score++;
+        scoreEl.textContent = score;
+
+        correctSound.currentTime = 0;
+        correctSound.play().catch(() => {});
+
+        canClick = false;
+        setTimeout(() => {
+          newRound();
+        }, 600);
+      } else {
+        target.classList.add('wrong');
+
+        wrongSound.currentTime = 0;
+        wrongSound.play().catch(() => {});
+
+        setTimeout(() => {
+          target.classList.remove('wrong');
+        }, 400);
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      newRound();
+    });
+
+    backBtn.addEventListener('click', () => {
+      // останавливаем текущую озвучку при выходе в меню
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+
+      bodyEl.classList.remove('color-bg', 'shape-bg', 'both-bg');
+      bodyEl.classList.add('menu-bg');
+      showScreen('menuScreen');
+    });
+
+    document.querySelectorAll('.menu-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const mode = btn.dataset.mode;
+        startGame(mode);
+      });
+    });
+  </script>
+</body>
+</html>

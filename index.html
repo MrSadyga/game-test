@@ -3,15 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <title>Игры: Цвет и Форма</title>
-<meta http-equiv="content-type" content="text/html; charset=UTF-8">
-    <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, maximum-scale=1.0">
-    <meta name="color-scheme" content="light dark">
-    <meta name="theme-color" content="#e94560">
-    <meta name="fullscreen" content="true">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="style.css" />
   <script src="voice.js"></script>
 </head>
 <body>
@@ -37,7 +30,7 @@
     </div>
   </div>
 
-  <!-- Игра -->
+  <!-- Экран игры -->
   <div class="screen" id="gameScreen">
     <div class="screen-inner">
       <h2 id="gameTitle">Игра</h2>
@@ -62,16 +55,17 @@
   <script>
     const bodyEl = document.body;
 
-    const colors = [
-      { key: 'red',    nameRu: 'красный',  hex: '#ef4444' },
-      { key: 'blue',   nameRu: 'синий',    hex: '#3b82f6' },
-      { key: 'green',  nameRu: 'зелёный',  hex: '#22c55e' },
-      { key: 'yellow', nameRu: 'жёлтый',   hex: '#eab308' },
+    // Один источник правды для цветов
+    const COLORS = [
+      { key: 'red',    nameRu: 'красный',    hex: '#ef4444' },
+      { key: 'blue',   nameRu: 'синий',      hex: '#3b82f6' },
+      { key: 'green',  nameRu: 'зелёный',    hex: '#22c55e' },
+      { key: 'yellow', nameRu: 'жёлтый',     hex: '#eab308' },
       { key: 'purple', nameRu: 'фиолетовый', hex: '#a855f7' },
-      { key: 'orange', nameRu: 'оранжевый', hex: '#f97316' }
+      { key: 'orange', nameRu: 'оранжевый',  hex: '#f97316' }
     ];
 
-    const shapesList = [
+    const SHAPES = [
       { key: 'circle',   nameRu: 'круг' },
       { key: 'square',   nameRu: 'квадрат' },
       { key: 'triangle', nameRu: 'треугольник' }
@@ -86,18 +80,17 @@
     const nextBtn      = document.getElementById('nextBtn');
     const backBtn      = document.getElementById('backBtn');
 
-    let currentMode = 'color';
-    let currentTarget = null;
+    let currentMode = 'color';   // 'color' | 'shape' | 'both'
+    let currentTarget = null;    // { colorKey?, shapeKey? }
+    let currentTaskText = '';
     let score = 0;
     let canClick = true;
-    let currentTaskText = '';
 
     const correctSound = new Audio('./correct.mp3');
     const wrongSound   = new Audio('./wrong.mp3');
     correctSound.volume = 0.7;
     wrongSound.volume   = 0.7;
 
-    // фон меню при старте
     bodyEl.classList.add('menu-bg');
 
     function showScreen(id) {
@@ -106,14 +99,30 @@
       document.getElementById(id).classList.add('active');
     }
 
-    function getRandomItems(arr, count) {
-      const shuffled = [...arr].sort(() => Math.random() - 0.5);
-      return shuffled.slice(0, count);
+    function getRandomFrom(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
     }
 
-    function getRandomFrom(arr) {
-      const i = Math.floor(Math.random() * arr.length);
-      return arr[i];
+    function getRandomItems(arr, count) {
+      const pool = [...arr];
+      const res = [];
+      while (res.length < count && pool.length > 0) {
+        const idx = Math.floor(Math.random() * pool.length);
+        res.push(pool.splice(idx, 1)[0]);
+      }
+      return res;
+    }
+
+    function clearHighlights(container) {
+      container.querySelectorAll('.shape').forEach(el => {
+        el.classList.remove('correct', 'wrong');
+      });
+    }
+
+    function speakTask() {
+      if (currentTaskText && typeof speak === 'function') {
+        speak(currentTaskText, 'ru-RU');
+      }
     }
 
     function startGame(mode) {
@@ -122,7 +131,6 @@
       scoreEl.textContent = score;
 
       bodyEl.classList.remove('menu-bg', 'color-bg', 'shape-bg', 'both-bg');
-
       if (mode === 'color') {
         bodyEl.classList.add('color-bg');
         gameTitleEl.textContent = 'Игра «Найди цвет»';
@@ -140,55 +148,59 @@
 
     function newRound() {
       shapesCont.innerHTML = '';
+      clearHighlights(shapesCont);
       currentTarget = null;
-      canClick = true;
       currentTaskText = '';
+      canClick = true;
 
       if (currentMode === 'color') {
+        // Нажми на цвет: <слово>
         taskTextEl.innerHTML =
           'Нажми на цвет: <span class="highlight" id="taskHighlight"></span>';
-        const taskHighlightEl = document.getElementById('taskHighlight');
+        const taskHighlight = document.getElementById('taskHighlight');
 
-        const roundColors = getRandomItems(colors, 4);
+        const roundColors = getRandomItems(COLORS, 4);
         const targetColor = getRandomFrom(roundColors);
 
+        // единый источник: targetColor
         currentTarget = { colorKey: targetColor.key };
-        taskHighlightEl.textContent = targetColor.nameRu;
+        taskHighlight.textContent = targetColor.nameRu;
         currentTaskText = 'Нажми на ' + targetColor.nameRu + ' цвет';
 
-        roundColors.forEach((c) => {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'shape';
-          wrapper.dataset.colorKey = c.key;
+        roundColors.forEach(c => {
+          const wrap = document.createElement('div');
+          wrap.className = 'shape';
+          wrap.dataset.color = c.key;
 
           const inner = document.createElement('div');
           inner.className = 'shape-inner circle';
           inner.style.backgroundColor = c.hex;
 
-          wrapper.appendChild(inner);
-          shapesCont.appendChild(wrapper);
+          wrap.appendChild(inner);
+          shapesCont.appendChild(wrap);
         });
+
       } else if (currentMode === 'shape') {
         taskTextEl.innerHTML =
           'Нажми на форму: <span class="highlight" id="taskHighlight"></span>';
-        const taskHighlightEl = document.getElementById('taskHighlight');
+        const taskHighlight = document.getElementById('taskHighlight');
 
-        const roundShapes = getRandomItems(shapesList, 3);
+        const roundShapes = getRandomItems(SHAPES, 3);
         const targetShape = getRandomFrom(roundShapes);
 
         currentTarget = { shapeKey: targetShape.key };
-        taskHighlightEl.textContent = targetShape.nameRu;
+        taskHighlight.textContent = targetShape.nameRu;
         currentTaskText = 'Нажми на форму ' + targetShape.nameRu;
 
-        roundShapes.forEach((s) => {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'shape';
-          wrapper.dataset.shapeKey = s.key;
+        roundShapes.forEach(s => {
+          const wrap = document.createElement('div');
+          wrap.className = 'shape';
+          wrap.dataset.shape = s.key;
 
           const inner = document.createElement('div');
           inner.className = 'shape-inner';
 
-          const colorHex = getRandomFrom(colors).hex;
+          const colorHex = getRandomFrom(COLORS).hex;
 
           if (s.key === 'circle') {
             inner.classList.add('circle');
@@ -201,42 +213,43 @@
             inner.style.borderBottomColor = colorHex;
           }
 
-          wrapper.appendChild(inner);
-          shapesCont.appendChild(wrapper);
+          wrap.appendChild(inner);
+          shapesCont.appendChild(wrap);
         });
+
       } else {
         taskTextEl.innerHTML =
           'Найди: <span class="highlight" id="taskHighlight"></span>';
-        const taskHighlightEl = document.getElementById('taskHighlight');
+        const taskHighlight = document.getElementById('taskHighlight');
 
-        const targetColor = getRandomFrom(colors);
-        const targetShape = getRandomFrom(shapesList);
+        const targetColor = getRandomFrom(COLORS);
+        const targetShape = getRandomFrom(SHAPES);
 
         currentTarget = {
           colorKey: targetColor.key,
           shapeKey: targetShape.key
         };
-        taskHighlightEl.textContent =
-          targetColor.nameRu + ' ' + targetShape.nameRu;
-        currentTaskText =
-          'Найди ' + targetColor.nameRu + ' ' + targetShape.nameRu;
+
+        const phrase = targetColor.nameRu + ' ' + targetShape.nameRu;
+        taskHighlight.textContent = phrase;
+        currentTaskText = 'Найди ' + phrase;
 
         const items = [];
+        const used = new Set();
+
         items.push({
           isTarget: true,
           colorKey: targetColor.key,
           shapeKey: targetShape.key
         });
-
-        const usedCombos = new Set();
-        usedCombos.add(targetColor.key + '-' + targetShape.key);
+        used.add(targetColor.key + '-' + targetShape.key);
 
         while (items.length < 4) {
-          const c = getRandomFrom(colors);
-          const s = getRandomFrom(shapesList);
-          const comboKey = c.key + '-' + s.key;
-          if (usedCombos.has(comboKey)) continue;
-          usedCombos.add(comboKey);
+          const c = getRandomFrom(COLORS);
+          const s = getRandomFrom(SHAPES);
+          const key = c.key + '-' + s.key;
+          if (used.has(key)) continue;
+          used.add(key);
           items.push({
             isTarget: false,
             colorKey: c.key,
@@ -246,18 +259,16 @@
 
         items.sort(() => Math.random() - 0.5);
 
-        items.forEach((item) => {
-          const wrapper = document.createElement('div');
-          wrapper.className = 'shape';
-          wrapper.dataset.colorKey = item.colorKey;
-          wrapper.dataset.shapeKey = item.shapeKey;
+        items.forEach(item => {
+          const wrap = document.createElement('div');
+          wrap.className = 'shape';
+          wrap.dataset.color = item.colorKey;
+          wrap.dataset.shape = item.shapeKey;
 
           const inner = document.createElement('div');
           inner.className = 'shape-inner';
 
-          const colorHex = colors.find(
-            (c) => c.key === item.colorKey
-          ).hex;
+          const colorHex = COLORS.find(c => c.key === item.colorKey).hex;
 
           if (item.shapeKey === 'circle') {
             inner.classList.add('circle');
@@ -270,39 +281,36 @@
             inner.style.borderBottomColor = colorHex;
           }
 
-          wrapper.appendChild(inner);
-          shapesCont.appendChild(wrapper);
+          wrap.appendChild(inner);
+          shapesCont.appendChild(wrap);
         });
       }
 
-      // Автоматически озвучиваем новое задание
-      if (currentTaskText && typeof speak === 'function') {
-        speak(currentTaskText, 'ru-RU');
-      }
+      speakTask();
     }
 
     shapesCont.addEventListener('click', (e) => {
-      const target = e.target.closest('.shape');
-      if (!target || !canClick || !currentTarget) return;
+      const shapeEl = e.target.closest('.shape');
+      if (!shapeEl || !canClick || !currentTarget) return;
 
       let isCorrect = false;
 
       if (currentMode === 'color') {
-        const chosenColor = target.dataset.colorKey;
+        const chosenColor = shapeEl.dataset.color;
         isCorrect = chosenColor === currentTarget.colorKey;
       } else if (currentMode === 'shape') {
-        const chosenShape = target.dataset.shapeKey;
+        const chosenShape = shapeEl.dataset.shape;
         isCorrect = chosenShape === currentTarget.shapeKey;
       } else {
-        const chosenColor = target.dataset.colorKey;
-        const chosenShape = target.dataset.shapeKey;
+        const chosenColor = shapeEl.dataset.color;
+        const chosenShape = shapeEl.dataset.shape;
         isCorrect =
           chosenColor === currentTarget.colorKey &&
           chosenShape === currentTarget.shapeKey;
       }
 
       if (isCorrect) {
-        target.classList.add('correct');
+        shapeEl.classList.add('correct');
         score++;
         scoreEl.textContent = score;
 
@@ -310,40 +318,29 @@
         correctSound.play().catch(() => {});
 
         canClick = false;
-        setTimeout(() => {
-          newRound();
-        }, 600);
+        setTimeout(newRound, 800);
       } else {
-        target.classList.add('wrong');
-
+        shapeEl.classList.add('wrong');
         wrongSound.currentTime = 0;
         wrongSound.play().catch(() => {});
-
-        setTimeout(() => {
-          target.classList.remove('wrong');
-        }, 400);
+        setTimeout(() => shapeEl.classList.remove('wrong'), 400);
       }
     });
 
-    nextBtn.addEventListener('click', () => {
-      newRound();
-    });
+    nextBtn.addEventListener('click', newRound);
 
     backBtn.addEventListener('click', () => {
-      // останавливаем текущую озвучку при выходе в меню
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
-
       bodyEl.classList.remove('color-bg', 'shape-bg', 'both-bg');
       bodyEl.classList.add('menu-bg');
       showScreen('menuScreen');
     });
 
-    document.querySelectorAll('.menu-btn').forEach((btn) => {
+    document.querySelectorAll('.menu-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        const mode = btn.dataset.mode;
-        startGame(mode);
+        startGame(btn.dataset.mode);
       });
     });
   </script>

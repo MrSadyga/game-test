@@ -251,7 +251,7 @@ button.btn:active {
   font-size: 50px;
   transform: translate(-50%, -50%) scale(0.3);
   opacity: 0;
-  animation: emoji-pop 700ms ease-out forwards;
+  animation: emoji-pop 1400ms ease-out forwards;
 }
 
 @keyframes emoji-pop {

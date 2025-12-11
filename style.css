@@ -248,7 +248,20 @@ button.btn:active {
   position: relative;
 }
 
-/* сама анимация вылета */
+.game-emoji-layer {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.emoji-burst {
+  position: absolute;
+  pointer-events: none;
+  font-size: 50px;
+  animation: emoji-pop 700ms ease-out forwards;
+}
+
 @keyframes emoji-pop {
   0% {
     transform: translate(-50%, -50%) scale(0.3);

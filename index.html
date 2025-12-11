@@ -142,13 +142,14 @@ function showEmojiBurst(targetEl, isCorrect) {
   const centerY = rect.top + rect.height / 2 - parentRect.top;
 
   const count = 5;      // сколько смайликов
-  const radius = 80;    // насколько далеко разлетаются
+  const radius = 80;    // дальность разлёта
 
   for (let i = 0; i < count; i++) {
     const span = document.createElement('span');
     span.className = 'emoji-burst';
     span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
 
+    // углы равномерно по кругу + небольшая случайность
     const baseAngle = (Math.PI * 2 * i) / count;
     const angle = baseAngle + (Math.random() - 0.5) * 0.5;
 

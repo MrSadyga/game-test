@@ -4,12 +4,19 @@
   <meta charset="UTF-8" />
   <title>Игры: Цвет и Форма</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="style.css?v=3" />
+  <link rel="stylesheet" href="style.css?v=6" />
   <script src="voice.js"></script>
 </head>
 <body>
+  <!-- Стартовый экран -->
+  <div class="screen active" id="startScreen">
+    <div class="start-inner">
+      <button class="start-btn" id="enterGameBtn">Войти в игру</button>
+    </div>
+  </div>
+
   <!-- Меню -->
-  <div class="screen active" id="menuScreen">
+  <div class="screen" id="menuScreen">
     <div class="screen-inner">
       <h1>Детские игры: Цвет и Форма</h1>
       <p>Выбери игру:</p>
@@ -55,6 +62,21 @@
     </div>
   </div>
 
+  <!-- Модальное окно завершения уровня -->
+  <div id="levelCompleteModal" class="level-modal">
+    <div class="screen-inner">
+      <h2>Молодец!</h2>
+      <p>Ты нашёл 20 цветов подряд!</p>
+      <div class="level-image-wrap">
+        <img src="images.jpg" alt="Поздравление" />
+      </div>
+      <p>Поднимись на следующий уровень и попробуй игру «Найди форму».</p>
+      <div class="btn-row">
+        <button class="btn" id="nextLevelBtn">Перейти на следующий уровень</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const bodyEl = document.body;
 
@@ -73,6 +95,18 @@
       { key: 'triangle', nameRu: 'треугольник' }
     ];
 
+    const COLOR_LEVEL_GOAL = 20;
+    const SHAPE_LEVEL_GOAL = 20;
+    const BOTH_LEVEL_GOAL  = 20;
+
+    const HINT_PHRASES = [
+      'Давай подумаем ещё.',
+      'Присмотрись получше.',
+      'Ты уже рядом, попробуй ещё раз.'
+    ];
+
+    const startScreen  = document.getElementById('startScreen');
+    const enterGameBtn = document.getElementById('enterGameBtn');
     const menuScreen   = document.getElementById('menuScreen');
     const gameScreen   = document.getElementById('gameScreen');
     const gameTitleEl  = document.getElementById('gameTitle');
@@ -82,6 +116,9 @@
     const nextBtn      = document.getElementById('nextBtn');
     const backBtn      = document.getElementById('backBtn');
     const emojiLayer   = document.getElementById('emojiLayer');
+
+    const levelCompleteModal = document.getElementById('levelCompleteModal');
+    const nextLevelBtn       = document.getElementById('nextLevelBtn');
 
     let currentMode = 'color';   // 'color' | 'shape' | 'both'
     let currentTarget = null;    // { colorKey?, shapeKey? }
@@ -94,9 +131,21 @@
     correctSound.volume = 0.7;
     wrongSound.volume   = 0.7;
 
+    const bgMusic = new Audio('./d.mp3');
+    bgMusic.loop = true;
+    bgMusic.volume = 0.25;
+
+    const menuMusic = new Audio('./c.mp3');
+    menuMusic.loop = true;
+    menuMusic.volume = 0.25;
+
+    const transitionSound = new Audio('./wau.mp3');
+    transitionSound.volume = 0.9;
+
     bodyEl.classList.add('menu-bg');
 
     function showScreen(id) {
+      startScreen.classList.remove('active');
       menuScreen.classList.remove('active');
       gameScreen.classList.remove('active');
       document.getElementById(id).classList.add('active');
@@ -128,43 +177,142 @@
       }
     }
 
-    // Один смайлик, взлёт вверх
-function showEmojiBurst(targetEl, isCorrect) {
-  if (!emojiLayer || !targetEl) return;
+    function speakWrongHint() {
+      if (typeof speak !== 'function') return;
+      const phrase = HINT_PHRASES[Math.floor(Math.random() * HINT_PHRASES.length)];
+      speak(phrase, 'ru-RU');
+    }
 
-  const emojis = isCorrect
-    ? ['😀','😄','🎉','⭐','👏']
-    : ['😕','😞','🙈','☁️'];
+    function startBackgroundMusic() {
+      try {
+        bgMusic.currentTime = 0;
+        bgMusic.play().catch(() => {});
+      } catch (e) {}
+    }
 
-  const rect = targetEl.getBoundingClientRect();
-  const parentRect = emojiLayer.getBoundingClientRect();
-  const centerX = rect.left + rect.width / 2 - parentRect.left;
-  const centerY = rect.top + rect.height / 2 - parentRect.top;
+    function stopBackgroundMusic() {
+      try {
+        bgMusic.pause();
+      } catch (e) {}
+    }
 
-  const count = 5;      // сколько смайликов
-  const radius = 80;    // дальность разлёта
+    function startMenuMusic() {
+      try {
+        menuMusic.currentTime = 0;
+        menuMusic.play().catch(() => {});
+      } catch (e) {}
+    }
 
-  for (let i = 0; i < count; i++) {
-    const span = document.createElement('span');
-    span.className = 'emoji-burst';
-    span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+    function stopMenuMusic() {
+      try {
+        menuMusic.pause();
+      } catch (e) {}
+    }
 
-    // углы равномерно по кругу + небольшая случайность
-    const baseAngle = (Math.PI * 2 * i) / count;
-    const angle = baseAngle + (Math.random() - 0.5) * 0.5;
+    function showEmojiBurst(targetEl, isCorrect) {
+      if (!emojiLayer || !targetEl) return;
 
-    const dx = Math.cos(angle) * radius;
-    const dy = Math.sin(angle) * radius;
+      const emojis = isCorrect
+        ? ['😀','😄','🎉','⭐','👏']
+        : ['😕','😞','🙈','☁️'];
 
-    // конечная позиция смайлика
-    span.style.left = (centerX + dx) + 'px';
-    span.style.top  = (centerY + dy) + 'px';
+      const rect = targetEl.getBoundingClientRect();
+      const parentRect = emojiLayer.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2 - parentRect.left;
+      const centerY = rect.top + rect.height / 2 - parentRect.top;
 
-    emojiLayer.appendChild(span);
-    setTimeout(() => span.remove(), 1500);
-  }
-}
+      const count = 5;
+      const radius = 80;
 
+      for (let i = 0; i < count; i++) {
+        const span = document.createElement('span');
+        span.className = 'emoji-burst';
+        span.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+
+        const baseAngle = (Math.PI * 2 * i) / count;
+        const angle = baseAngle + (Math.random() - 0.5) * 0.5;
+
+        const dx = Math.cos(angle) * radius;
+        const dy = Math.sin(angle) * radius;
+
+        span.style.left = (centerX + dx) + 'px';
+        span.style.top  = (centerY + dy) + 'px';
+
+        emojiLayer.appendChild(span);
+        setTimeout(() => span.remove(), 1100);
+      }
+    }
+
+    function showLevelComplete() {
+      if (levelCompleteModal) {
+        const titleEl = levelCompleteModal.querySelector('h2');
+        const pEls = levelCompleteModal.querySelectorAll('p');
+
+        if (currentMode === 'color') {
+          if (titleEl) titleEl.textContent = 'Молодец!';
+          if (pEls[0]) pEls[0].textContent = 'Ты нашёл 20 цветов подряд!';
+          if (pEls[1]) pEls[1].textContent = 'Поднимись на следующий уровень и попробуй игру «Найди форму».';
+        } else if (currentMode === 'shape') {
+          if (titleEl) titleEl.textContent = 'Отлично!';
+          if (pEls[0]) pEls[0].textContent = 'Ты нашёл 20 форм подряд!';
+          if (pEls[1]) pEls[1].textContent = 'Теперь попробуем игру «Цвет + форма»!';
+        } else if (currentMode === 'both') {
+          if (titleEl) titleEl.textContent = 'Ура! Ты чемпион!';
+          if (pEls[0]) pEls[0].textContent = 'Ты отлично справился с цветами и формами!';
+          if (pEls[1]) pEls[1].textContent = 'Можешь вернуться в меню и попробовать заново или выбрать другую игру.';
+        }
+
+        levelCompleteModal.classList.add('active-modal');
+      }
+
+      try {
+        transitionSound.currentTime = 0;
+        transitionSound.play().catch(() => {
+          speakCongratsAfterWau();
+        });
+        transitionSound.onended = () => {
+          speakCongratsAfterWau();
+        };
+      } catch (e) {
+        speakCongratsAfterWau();
+      }
+    }
+
+    function speakCongratsAfterWau() {
+      if (typeof speak !== 'function') return;
+
+      if (currentMode === 'color') {
+        speak('Молодец! Ты прошёл уровень. Теперь попробуем найти форму.', 'ru-RU');
+      } else if (currentMode === 'shape') {
+        speak('Отлично! Ты нашёл все формы. Теперь поиграем в цвет и форму вместе.', 'ru-RU');
+      } else if (currentMode === 'both') {
+        speak('Ура! Ты прошёл все уровни. Можно вернуться в меню и поиграть ещё раз.', 'ru-RU');
+      }
+    }
+
+    function hideLevelComplete() {
+      if (levelCompleteModal) {
+        levelCompleteModal.classList.remove('active-modal');
+      }
+    }
+
+    if (nextLevelBtn) {
+      nextLevelBtn.addEventListener('click', () => {
+        hideLevelComplete();
+
+        if (currentMode === 'color') {
+          startGame('shape');
+        } else if (currentMode === 'shape') {
+          startGame('both');
+        } else if (currentMode === 'both') {
+          stopBackgroundMusic();
+          bodyEl.classList.remove('color-bg', 'shape-bg', 'both-bg');
+          bodyEl.classList.add('menu-bg');
+          showScreen('menuScreen');
+          startMenuMusic();
+        }
+      });
+    }
 
     function startGame(mode) {
       currentMode = mode;
@@ -184,6 +332,8 @@ function showEmojiBurst(targetEl, isCorrect) {
       }
 
       showScreen('gameScreen');
+      stopMenuMusic();
+      startBackgroundMusic();
       newRound();
     }
 
@@ -358,8 +508,19 @@ function showEmojiBurst(targetEl, isCorrect) {
         correctSound.currentTime = 0;
         correctSound.play().catch(() => {});
 
-        canClick = false;
-        setTimeout(newRound, 800);
+        const finishedColorLevel = currentMode === 'color' && score >= COLOR_LEVEL_GOAL;
+        const finishedShapeLevel = currentMode === 'shape' && score >= SHAPE_LEVEL_GOAL;
+        const finishedBothLevel  = currentMode === 'both'  && score >= BOTH_LEVEL_GOAL;
+
+        if (finishedColorLevel || finishedShapeLevel || finishedBothLevel) {
+          canClick = false;
+          setTimeout(() => {
+            showLevelComplete();
+          }, 800);
+        } else {
+          canClick = false;
+          setTimeout(newRound, 800);
+        }
       } else {
         shapeEl.classList.add('wrong');
 
@@ -367,6 +528,10 @@ function showEmojiBurst(targetEl, isCorrect) {
 
         wrongSound.currentTime = 0;
         wrongSound.play().catch(() => {});
+
+        // только подсказка, без повторения задания
+        speakWrongHint();
+
         setTimeout(() => shapeEl.classList.remove('wrong'), 400);
       }
     });
@@ -377,10 +542,22 @@ function showEmojiBurst(targetEl, isCorrect) {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
       }
+      stopBackgroundMusic();
       bodyEl.classList.remove('color-bg', 'shape-bg', 'both-bg');
       bodyEl.classList.add('menu-bg');
       showScreen('menuScreen');
+      startMenuMusic();
     });
+
+    if (enterGameBtn) {
+      enterGameBtn.addEventListener('click', () => {
+        startMenuMusic();
+        showScreen('menuScreen');
+        if (startScreen) {
+          startScreen.remove();
+        }
+      });
+    }
 
     document.querySelectorAll('.menu-btn').forEach(btn => {
       btn.addEventListener('click', () => {

@@ -83,47 +83,51 @@ p {
 }
 
 .menu-btn {
-  padding: 11px 18px;
-  font-size: 17px;
-  border-radius: 16px;
+  padding: 14px 20px;
+  font-size: 30px;          /* было 20px */
+  border-radius: 18px;
   border: none;
   cursor: pointer;
   background: linear-gradient(90deg,#f97316,#facc15);
   color: #fff;
-  font-weight: 700;
+  font-weight: 800;
   text-align: left;
   display: flex;
   justify-content: space-between;
   align-items: center;
   transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
-  box-shadow: 0 3px 0 rgba(180,100,20,0.8);
+  box-shadow: 0 4px 0 rgba(180,100,20,0.9);
+  font-family: "Comic Sans MS","Comic Neue",system-ui,sans-serif;
+  text-shadow: 0 0 4px rgba(255,255,255,0.9),
+               0 2px 0 rgba(160,80,10,0.9);
 }
 
 .menu-btn:nth-child(2) {
   background: linear-gradient(90deg,#22c55e,#4ade80);
-  box-shadow: 0 3px 0 rgba(16,122,55,0.8);
+  box-shadow: 0 4px 0 rgba(16,122,55,0.9);
 }
 
 .menu-btn:nth-child(3) {
   background: linear-gradient(90deg,#3b82f6,#60a5fa);
-  box-shadow: 0 3px 0 rgba(30,64,175,0.8);
+  box-shadow: 0 4px 0 rgba(30,64,175,0.9);
 }
 
 .menu-btn span {
-  font-size: 13px;
-  font-weight: 400;
-  opacity: 0.95;
+  font-size: 21px;          /* было 14px */
+  font-weight: 600;
+  opacity: 0.98;
+  text-shadow: 0 0 3px rgba(255,255,255,0.8);
 }
 
 .menu-btn:hover {
-  transform: translateY(-2px);
+  transform: translateY(-2px) scale(1.02);
   filter: brightness(1.05);
-  box-shadow: 0 5px 0 rgba(0,0,0,0.25);
+  box-shadow: 0 6px 0 rgba(0,0,0,0.25);
 }
 
 .menu-btn:active {
   transform: translateY(1px) scale(0.98);
-  box-shadow: 0 1px 0 rgba(0,0,0,0.25);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.25);
 }
 
 /* задание */
@@ -179,7 +183,7 @@ p {
 }
 
 .shape-inner.circle { border-radius: 50%; }
-.shape-inner.square { border-radius: 0px; }
+.shape-inner.square { border-radius: 0; }
 
 .shape-inner.triangle {
   width: 0;
@@ -211,7 +215,7 @@ p {
 
 button.btn {
   padding: 9px 18px;
-  font-size: 16px;
+  font-size: 24px;          /* было 16px */
   border-radius: 999px;
   border: none;
   cursor: pointer;
@@ -317,26 +321,30 @@ button.btn:active {
   width: 100%;
   max-width: 420px;
   padding: 22px 24px;
-  font-size: 24px;
+  font-size: 42px;          /* было 28px */
   font-weight: 800;
   border-radius: 999px;
   border: none;
   cursor: pointer;
   background: linear-gradient(135deg,#f97316,#facc15);
   color: #fff;
-  box-shadow: 0 10px 0 rgba(180,100,20,0.8);
+  box-shadow: 0 10px 0 rgba(180,100,20,0.9);
   text-transform: uppercase;
-  letter-spacing: 1px;
+  letter-spacing: 2px;
+  font-family: "Comic Sans MS","Comic Neue",system-ui,sans-serif;
+  text-shadow: 0 0 6px rgba(255,255,255,0.8),
+               0 3px 0 rgba(180,100,20,0.9);
+  transform: skewX(-3deg);
   transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
 }
 
 .start-btn:hover {
-  transform: translateY(-3px);
-  filter: brightness(1.05);
-  box-shadow: 0 14px 0 rgba(0,0,0,0.3);
+  transform: skewX(-3deg) translateY(-3px) scale(1.02);
+  filter: brightness(1.06);
+  box-shadow: 0 14px 0 rgba(0,0,0,0.35);
 }
 
 .start-btn:active {
-  transform: translateY(2px) scale(0.98);
-  box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+  transform: skewX(-3deg) translateY(2px) scale(0.98);
+  box-shadow: 0 4px 0 rgba(0,0,0,0.35);
 }

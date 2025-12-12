@@ -91,9 +91,9 @@ p {
   background: linear-gradient(90deg,#f97316,#facc15);
   color: #fff;
   font-weight: 800;
-  text-align: left;
+  text-align: center;
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   transition: transform 0.12s ease, box-shadow 0.12s ease, filter 0.12s ease;
   box-shadow: 0 4px 0 rgba(180,100,20,0.9);

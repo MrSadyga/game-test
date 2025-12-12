@@ -120,6 +120,7 @@
     let currentMode = 'color';   // 'color' | 'shape' | 'both'
     let currentTarget = null;    // { colorKey?, shapeKey? }
     let currentTaskText = '';
+    let lastTaskText = '';       // запоминаем прошлое текстовое задание
     let score = 0;
     let canClick = true;
 
@@ -347,11 +348,22 @@
         const taskHighlight = document.getElementById('taskHighlight');
 
         const roundColors = getRandomItems(COLORS, 4);
-        const targetColor = getRandomFrom(roundColors);
+        let targetColor = getRandomFrom(roundColors);
+
+        // формируем текст задания и следим, чтобы он не совпадал с прошлым
+        let guard = 0;
+        let text = 'Нажми на ' + targetColor.nameRu + ' цвет';
+        while (lastTaskText && text === lastTaskText && guard < 10 && roundColors.length > 1) {
+          const others = roundColors.filter(c => ('Нажми на ' + c.nameRu + ' цвет') !== lastTaskText);
+          targetColor = getRandomFrom(others.length ? others : roundColors);
+          text = 'Нажми на ' + targetColor.nameRu + ' цвет';
+          guard++;
+        }
 
         currentTarget = { colorKey: targetColor.key };
         taskHighlight.textContent = targetColor.nameRu;
-        currentTaskText = 'Нажми на ' + targetColor.nameRu + ' цвет';
+        currentTaskText = text;
+        lastTaskText = currentTaskText;
 
         roundColors.forEach(c => {
           const wrap = document.createElement('div');
@@ -372,11 +384,21 @@
         const taskHighlight = document.getElementById('taskHighlight');
 
         const roundShapes = getRandomItems(SHAPES, 3);
-        const targetShape = getRandomFrom(roundShapes);
+        let targetShape = getRandomFrom(roundShapes);
+
+        let guard = 0;
+        let text = 'Нажми на форму ' + targetShape.nameRu;
+        while (lastTaskText && text === lastTaskText && guard < 10 && roundShapes.length > 1) {
+          const others = roundShapes.filter(s => ('Нажми на форму ' + s.nameRu) !== lastTaskText);
+          targetShape = getRandomFrom(others.length ? others : roundShapes);
+          text = 'Нажми на форму ' + targetShape.nameRu;
+          guard++;
+        }
 
         currentTarget = { shapeKey: targetShape.key };
         taskHighlight.textContent = targetShape.nameRu;
-        currentTaskText = 'Нажми на форму ' + targetShape.nameRu;
+        currentTaskText = text;
+        lastTaskText = currentTaskText;
 
         roundShapes.forEach(s => {
           const wrap = document.createElement('div');
@@ -408,17 +430,29 @@
           'Найди: <span class="highlight" id="taskHighlight"></span>';
         const taskHighlight = document.getElementById('taskHighlight');
 
-        const targetColor = getRandomFrom(COLORS);
-        const targetShape = getRandomFrom(SHAPES);
+        let targetColor = getRandomFrom(COLORS);
+        let targetShape = getRandomFrom(SHAPES);
+
+        let phrase = targetColor.nameRu + ' ' + targetShape.nameRu;
+        let text = 'Найди ' + phrase;
+        let guard = 0;
+
+        while (lastTaskText && text === lastTaskText && guard < 10) {
+          targetColor = getRandomFrom(COLORS);
+          targetShape = getRandomFrom(SHAPES);
+          phrase = targetColor.nameRu + ' ' + targetShape.nameRu;
+          text = 'Найди ' + phrase;
+          guard++;
+        }
 
         currentTarget = {
           colorKey: targetColor.key,
           shapeKey: targetShape.key
         };
 
-        const phrase = targetColor.nameRu + ' ' + targetShape.nameRu;
         taskHighlight.textContent = phrase;
-        currentTaskText = 'Найди ' + phrase;
+        currentTaskText = text;
+        lastTaskText = currentTaskText;
 
         const items = [];
         const used = new Set();
@@ -526,7 +560,6 @@
         wrongSound.currentTime = 0;
         wrongSound.play().catch(() => {});
 
-        // только подсказка, без повторения задания
         speakWrongHint();
 
         setTimeout(() => shapeEl.classList.remove('wrong'), 400);
